@@ -1,7 +1,10 @@
 package com.example.demo.web;
 
+import com.example.demo.config.auth.LoginUser;
+import com.example.demo.config.auth.dto.SessionUser;
 import com.example.demo.service.posts.PostsService;
 import com.example.demo.web.dto.PostsResponseDto;
+import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -15,10 +18,17 @@ public class IndexController {
 
     private final PostsService postsService;
 
+
     @GetMapping("/")
-    public String index(Model model)
+    public String index(Model model, @LoginUser SessionUser user)
     {
         model.addAttribute("posts",postsService.findAllDesc());
+
+
+        if(user!=null){
+            model.addAttribute("userName",user.getName());
+        }
+
         return "index";
     }
 
