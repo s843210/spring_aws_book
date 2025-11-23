@@ -7,40 +7,41 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.HttpStatusEntryPoint;
+import org.springframework.http.HttpStatus;
 
 @RequiredArgsConstructor
-@Configuration // @EnableWebSecurity에 포함되어 있어 생략 가능하지만 명시적으로 사용하는 것을 권장합니다.
+@Configuration
 @EnableWebSecurity
 public class SecurityConfig {
 
-    private final CustomOAuth2UserService customOAuth2UserService;
+        private final CustomOAuth2UserService customOAuth2UserService;
 
-    @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        http
-                // csrf와 frameOptions 비활성화
-                .csrf(csrf -> csrf.disable())
-                .headers(headers -> headers.frameOptions(frameOptions -> frameOptions.disable()))
+        @Bean
+        public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+                http
+                                .csrf(csrf -> csrf.disable())
+                                .headers(headers -> headers.frameOptions(frameOptions -> frameOptions.disable()))
+                                .authorizeHttpRequests(authorize -> authorize
+                                                .requestMatchers("/", "/css/**", "/images/**", "/js/**",
+                                                                "/h2-console/**", "/profile", "/index.html",
+                                                                "/posts-save.html", "/posts-update.html")
+                                                .permitAll()
+                                                .requestMatchers("/api/v1/user").permitAll()
+                                                .requestMatchers(org.springframework.http.HttpMethod.GET,
+                                                                "/api/v1/posts/**")
+                                                .permitAll()
+                                                .requestMatchers("/api/v1/**").hasRole(Role.USER.name())
+                                                .anyRequest().authenticated())
+                                .logout(logout -> logout
+                                                .logoutSuccessUrl("/"))
+                                .oauth2Login(oauth2 -> oauth2
+                                                .userInfoEndpoint(userInfo -> userInfo
+                                                                .userService(customOAuth2UserService)))
+                                .exceptionHandling(exception -> exception
+                                                .authenticationEntryPoint(
+                                                                new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED)));
 
-                // URL 별 권한 관리 설정
-                .authorizeHttpRequests(authorize -> authorize
-                        .requestMatchers("/", "/css/**", "/images/**", "/js/**", "/h2-console/**").permitAll()
-                        .requestMatchers("/api/v1/**").hasRole(Role.USER.name())
-                        .anyRequest().authenticated()
-                )
-
-                // 로그아웃 설정
-                .logout(logout -> logout
-                        .logoutSuccessUrl("/")
-                )
-
-                // OAuth2 로그인 설정
-                .oauth2Login(oauth2 -> oauth2
-                        .userInfoEndpoint(userInfo -> userInfo
-                                .userService(customOAuth2UserService)
-                        )
-                );
-
-        return http.build();
-    }
+                return http.build();
+        }
 }
