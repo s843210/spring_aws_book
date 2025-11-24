@@ -20,18 +20,18 @@ public class PostsApiController {
     }
 
     @PutMapping("/api/v1/posts/{id}")
-    public Long update(@PathVariable Long id, @RequestBody PostsUpdateRequestDto requestDto,
+    public Long update(@PathVariable("id") Long id, @RequestBody PostsUpdateRequestDto requestDto,
             @LoginUser SessionUser user) {
         return postsService.update(id, requestDto, user);
     }
 
     @GetMapping("/api/v1/posts/{id}")
-    public PostsResponseDto findByid(@PathVariable Long id) {
+    public PostsResponseDto findByid(@PathVariable("id") Long id) {
         return postsService.findById(id);
     }
 
     @DeleteMapping("/api/v1/posts/{id}")
-    public Long delete(@PathVariable Long id, @LoginUser SessionUser user) {
+    public Long delete(@PathVariable("id") Long id, @LoginUser SessionUser user) {
         postsService.delete(id, user);
         return id;
     }
