@@ -25,7 +25,8 @@ public class SecurityConfig {
                                 .authorizeHttpRequests(authorize -> authorize
                                                 .requestMatchers("/", "/css/**", "/images/**", "/js/**",
                                                                 "/h2-console/**", "/profile", "/index.html",
-                                                                "/posts-save.html", "/posts-update.html")
+                                                                "/posts-save.html", "/posts-update.html",
+                                                                "/swagger-ui/**", "/v3/api-docs/**")
                                                 .permitAll()
                                                 .requestMatchers("/api/v1/user").permitAll()
                                                 .requestMatchers(org.springframework.http.HttpMethod.GET,

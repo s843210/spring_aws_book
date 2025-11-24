@@ -1,5 +1,8 @@
 package com.example.demo.domain.posts;
 
+import com.example.demo.domain.user.Role;
+import com.example.demo.domain.user.User;
+import com.example.demo.domain.user.UserRepository;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -13,7 +16,6 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 import java.time.LocalDateTime;
 import java.util.List;
 
-
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -21,57 +23,78 @@ import static org.junit.jupiter.api.Assertions.*;
 @SpringBootTest
 class PostsRepositoryTest {
 
-    @Autowired
-    PostsRepository postsRepository;
+        @Autowired
+        PostsRepository postsRepository;
 
-    @AfterEach
-    public void cleanup()
-    {
-        postsRepository.deleteAll();
-    }
+        @Autowired
+        UserRepository userRepository;
 
-    @Test
-    public void 게시글저장_불러오기(){
-        //given
-        String title = "테스트 게시글";
-        String content = "테스트 본문";
+        @AfterEach
+        public void cleanup() {
+                postsRepository.deleteAll();
+                userRepository.deleteAll();
+        }
 
-        postsRepository.save(Posts.builder()
-                .title(title)
-                .content(content)
-                .author("ssss")
-                .build());
+        @Test
+        public void 게시글저장_불러오기() {
+                // given
+                User user = userRepository.save(User.builder()
+                                .name("ssss")
+                                .email("ssss@example.com")
+                                .picture("picture")
+                                .role(Role.USER)
+                                .build());
 
-        //when
-        List<Posts> postsList = postsRepository.findAll();
+                String title = "테스트 게시글";
+                String content = "테스트 본문";
 
-        //then
-        Posts posts = postsList.get(0);
-        assertThat(posts.getTitle()).isEqualTo(title);
-        assertThat(posts.getContent()).isEqualTo(content);
-    }
+                postsRepository.save(Posts.builder()
+                                .title(title)
+                                .content(content)
+                                .author("ssss")
+                                .user(user)
+                                .build());
 
-    @Test
-    public void BaseTimeEntity_등록(){
-        //given
-        LocalDateTime now = LocalDateTime.of(2019,6,4,0,0,0);
-        postsRepository.save(Posts.builder()
-                .title("title")
-                .content("content")
-                .author("author")
-                .build());
+                // when
+                List<Posts> postsList = postsRepository.findAll();
 
-        //when
-        List<Posts> postsList = postsRepository.findAll();
+                // then
+                Posts posts = postsList.get(0);
+                assertThat(posts.getTitle()).isEqualTo(title);
+                assertThat(posts.getContent()).isEqualTo(content);
+                assertThat(posts.getAuthor()).isEqualTo("ssss");
+        }
 
-        //then
-        Posts posts = postsList.get(0);
+        @Test
+        public void BaseTimeEntity_등록() {
+                // given
+                LocalDateTime now = LocalDateTime.of(2019, 6, 4, 0, 0, 0);
+                User user = userRepository.save(User.builder()
+                                .name("author")
+                                .email("author@example.com")
+                                .picture("picture")
+                                .role(Role.USER)
+                                .build());
 
-        System.out.println(">>>>>>>>>>> createDate="+posts.getCreatedDate()+" ,modifiedDate= "+posts.getModifiedDate());
+                postsRepository.save(Posts.builder()
+                                .title("title")
+                                .content("content")
+                                .author("author")
+                                .user(user)
+                                .build());
 
-        assertThat(posts.getCreatedDate()).isAfter(now);
-        assertThat(posts.getModifiedDate()).isAfter(now);
-    }
+                // when
+                List<Posts> postsList = postsRepository.findAll();
 
+                // then
+                Posts posts = postsList.get(0);
+
+                System.out.println(
+                                ">>>>>>>>>>> createDate=" + posts.getCreatedDate() + " ,modifiedDate= "
+                                                + posts.getModifiedDate());
+
+                assertThat(posts.getCreatedDate()).isAfter(now);
+                assertThat(posts.getModifiedDate()).isAfter(now);
+        }
 
 }

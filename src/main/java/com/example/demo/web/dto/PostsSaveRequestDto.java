@@ -1,7 +1,7 @@
 package com.example.demo.web.dto;
 
-
 import com.example.demo.domain.posts.Posts;
+import com.example.demo.domain.user.User;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -12,6 +12,7 @@ public class PostsSaveRequestDto {
     private String title;
     private String content;
     private String author;
+
     @Builder
     public PostsSaveRequestDto(String title, String content, String author) {
         this.title = title;
@@ -19,11 +20,12 @@ public class PostsSaveRequestDto {
         this.author = author;
     }
 
-    public Posts toEntity(){
+    public Posts toEntity(User user) {
         return Posts.builder()
                 .title(title)
                 .content(content)
                 .author(author)
+                .user(user)
                 .build();
 
     }

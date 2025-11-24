@@ -1,4 +1,5 @@
 package com.example.demo.web.dto;
+
 import com.example.demo.domain.posts.Posts;
 import lombok.Getter;
 import com.fasterxml.jackson.annotation.JsonFormat;

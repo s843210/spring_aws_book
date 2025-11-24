@@ -4,6 +4,8 @@ import com.example.demo.service.posts.PostsService;
 import com.example.demo.web.dto.PostsResponseDto;
 import com.example.demo.web.dto.PostsSaveRequestDto;
 import com.example.demo.web.dto.PostsUpdateRequestDto;
+import com.example.demo.config.auth.LoginUser;
+import com.example.demo.config.auth.dto.SessionUser;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
@@ -13,13 +15,14 @@ public class PostsApiController {
     private final PostsService postsService;
 
     @PostMapping("/api/v1/posts")
-    public Long save(@RequestBody PostsSaveRequestDto requestDto) {
-        return postsService.save(requestDto);
+    public Long save(@RequestBody PostsSaveRequestDto requestDto, @LoginUser SessionUser user) {
+        return postsService.save(requestDto, user);
     }
 
     @PutMapping("/api/v1/posts/{id}")
-    public Long update(@PathVariable Long id, @RequestBody PostsUpdateRequestDto requestDto) {
-        return postsService.update(id, requestDto);
+    public Long update(@PathVariable Long id, @RequestBody PostsUpdateRequestDto requestDto,
+            @LoginUser SessionUser user) {
+        return postsService.update(id, requestDto, user);
     }
 
     @GetMapping("/api/v1/posts/{id}")
@@ -28,8 +31,8 @@ public class PostsApiController {
     }
 
     @DeleteMapping("/api/v1/posts/{id}")
-    public Long delete(@PathVariable Long id) {
-        postsService.delete(id);
+    public Long delete(@PathVariable Long id, @LoginUser SessionUser user) {
+        postsService.delete(id, user);
         return id;
     }
 

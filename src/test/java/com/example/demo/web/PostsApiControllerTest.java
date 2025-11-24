@@ -1,9 +1,14 @@
 package com.example.demo.web;
 
+import com.example.demo.domain.user.UserRepository;
 import com.example.demo.domain.posts.Posts;
 import com.example.demo.domain.posts.PostsRepository;
 import com.example.demo.web.dto.PostsSaveRequestDto;
 import com.example.demo.web.dto.PostsUpdateRequestDto;
+import com.example.demo.config.auth.dto.SessionUser;
+import com.example.demo.domain.user.User;
+import com.example.demo.domain.user.Role;
+import org.springframework.mock.web.MockHttpSession;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -28,85 +33,114 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @ExtendWith(SpringExtension.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@org.springframework.transaction.annotation.Transactional
 class PostsApiControllerTest {
 
-    @Autowired
-    private WebApplicationContext context;
+        @Autowired
+        private WebApplicationContext context;
 
-    private MockMvc mvc;
+        private MockMvc mvc;
 
-    @BeforeEach
-    public void setup() {
-        mvc = MockMvcBuilders
-                .webAppContextSetup(context)
-                .apply(springSecurity())
-                .build();
-    }
+        @BeforeEach
+        public void setup() {
+                mvc = MockMvcBuilders
+                                .webAppContextSetup(context)
+                                .apply(springSecurity())
+                                .build();
+        }
 
-    @Autowired
-    private PostsRepository postsRepository;
+        @Autowired
+        private PostsRepository postsRepository;
 
-    @AfterEach
-    public void tearDown() throws Exception {
-        postsRepository.deleteAll();
-    }
+        @AfterEach
+        public void tearDown() throws Exception {
+                postsRepository.deleteAll();
+                userRepository.deleteAll();
+        }
 
-    @Test
-    @WithMockUser(roles = "USER")
-    public void Posts_등록된다() throws Exception {
-        // given
-        String title = "title";
-        String content = "content";
-        PostsSaveRequestDto requestDto = PostsSaveRequestDto.builder()
-                .title(title)
-                .content(content)
-                .author("author")
-                .build();
+        @Autowired
+        private UserRepository userRepository;
 
-        String url = "http://localhost:8080/api/v1/posts";
+        @Test
+        @WithMockUser(roles = "USER")
+        public void Posts_등록된다() throws Exception {
+                // given
+                User user = userRepository.save(User.builder()
+                                .name("author")
+                                .email("author@example.com")
+                                .picture("picture")
+                                .role(Role.USER)
+                                .build());
 
-        // when
-        mvc.perform(post(url)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(new ObjectMapper().writeValueAsString(requestDto)))
-                .andExpect(status().isOk());
+                String title = "title";
+                String content = "content";
+                PostsSaveRequestDto requestDto = PostsSaveRequestDto.builder()
+                                .title(title)
+                                .content(content)
+                                .author("author")
+                                .build();
 
-        // then
-        List<Posts> all = postsRepository.findAll();
-        assertThat(all.get(0).getTitle()).isEqualTo(title);
-        assertThat(all.get(0).getContent()).isEqualTo(content);
-    }
+                String url = "http://localhost:8080/api/v1/posts";
 
-    @Test
-    @WithMockUser(roles = "USER")
-    public void Posts_수정된다() throws Exception {
-        // given
-        Posts savedPosts = postsRepository.save(Posts.builder()
-                .title("title")
-                .content("content")
-                .author("author")
-                .build());
+                MockHttpSession session = new MockHttpSession();
+                session.setAttribute("user", new SessionUser(user));
 
-        Long updateId = savedPosts.getId();
-        String expectedTitle = "title2";
-        String expectedContent = "content2";
+                // when
+                mvc.perform(post(url)
+                                .session(session)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(new ObjectMapper().writeValueAsString(requestDto)))
+                                .andExpect(status().isOk());
 
-        PostsUpdateRequestDto requestDto = PostsUpdateRequestDto.builder()
-                .title(expectedTitle)
-                .content(expectedContent)
-                .build();
+                // then
+                List<Posts> all = postsRepository.findAll();
+                assertThat(all.get(0).getTitle()).isEqualTo(title);
+                assertThat(all.get(0).getContent()).isEqualTo(content);
+                assertThat(all.get(0).getAuthor()).isEqualTo("author");
+        }
 
-        String url = "http://localhost:8080/api/v1/posts/" + updateId;
+        @Test
+        @WithMockUser(roles = "USER")
+        public void Posts_수정된다() throws Exception {
+                // given
+                User user = userRepository.save(User.builder()
+                                .name("author")
+                                .email("author@example.com")
+                                .picture("picture")
+                                .role(Role.USER)
+                                .build());
 
-        // when
-        mvc.perform(put(url)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(new ObjectMapper().writeValueAsString(requestDto)))
-                .andExpect(status().isOk());
+                Posts savedPosts = postsRepository.save(Posts.builder()
+                                .title("title")
+                                .content("content")
+                                .author("author")
+                                .user(user)
+                                .build());
 
-        // then
-        List<Posts> all = postsRepository.findAll();
-        assertThat(all.get(0).getTitle()).isEqualTo(expectedTitle);
-        assertThat(all.get(0).getContent()).isEqualTo(expectedContent);
-    }
+                Long updateId = savedPosts.getId();
+                String expectedTitle = "title2";
+                String expectedContent = "content2";
+
+                PostsUpdateRequestDto requestDto = PostsUpdateRequestDto.builder()
+                                .title(expectedTitle)
+                                .content(expectedContent)
+                                .build();
+
+                String url = "http://localhost:8080/api/v1/posts/" + updateId;
+
+                MockHttpSession session = new MockHttpSession();
+                session.setAttribute("user", new SessionUser(user));
+
+                // when
+                mvc.perform(put(url)
+                                .session(session)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(new ObjectMapper().writeValueAsString(requestDto)))
+                                .andExpect(status().isOk());
+
+                // then
+                List<Posts> all = postsRepository.findAll();
+                assertThat(all.get(0).getTitle()).isEqualTo(expectedTitle);
+                assertThat(all.get(0).getContent()).isEqualTo(expectedContent);
+        }
 }
