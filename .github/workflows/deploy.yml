@@ -1,0 +1,66 @@
+name: Deploy to Amazon EC2
+
+on:
+  push:
+    branches:
+      - master
+
+env:
+  AWS_REGION: ap-northeast-2
+  S3_BUCKET_NAME: spring-aws-book-build-limbohyun020204
+  CODE_DEPLOY_APPLICATION_NAME: spring-aws-book
+  CODE_DEPLOY_DEPLOYMENT_GROUP_NAME: spring-aws-book-group
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    name: Deploy
+    runs-on: ubuntu-latest
+    environment: production
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v3
+
+    - name: Set up JDK 17
+      uses: actions/setup-java@v3
+      with:
+        distribution: 'temurin'
+        java-version: '17'
+
+    - name: Grant execute permission for gradlew
+      run: chmod +x gradlew
+
+    - name: Build with Gradle
+      run: ./gradlew clean build
+
+    - name: Make zip file
+      run: |
+        mkdir -p before-deploy
+        cp scripts/*.sh before-deploy/
+        cp appspec.yml before-deploy/
+        cp build/libs/*.jar before-deploy/
+        cd before-deploy && zip -r before-deploy.zip *
+        cd ../
+        mkdir -p deploy
+        mv before-deploy/before-deploy.zip deploy/spring_aws_book.zip
+
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v1
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ env.AWS_REGION }}
+
+    - name: Upload to S3
+      run: aws s3 cp --region ap-northeast-2 deploy/spring_aws_book.zip s3://$S3_BUCKET_NAME/spring_aws_book.zip
+
+    - name: Code Deploy
+      run: >
+        aws deploy create-deployment
+        --application-name $CODE_DEPLOY_APPLICATION_NAME
+        --deployment-config-name CodeDeployDefault.AllAtOnce
+        --deployment-group-name $CODE_DEPLOY_DEPLOYMENT_GROUP_NAME
+        --s3-location bucket=$S3_BUCKET_NAME,bundleType=zip,key=spring_aws_book.zip

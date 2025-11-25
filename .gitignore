@@ -118,3 +118,7 @@ replay_pid*
 
 
 application-oauth.properties
+application-real.properties
+application-real-db.properties
+
+!DEPLOY_LOG.md

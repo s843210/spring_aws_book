@@ -1,50 +1,63 @@
-# 스프링 부트 AWS 마이그레이션
+# 🚀 Spring Boot AWS 웹 서비스
 
-## 프로젝트 소개
-이 프로젝트는 '스프링 부트와 AWS로 혼자 구현하는 웹 서비스' 도서의 예제를 바탕으로 하며, Spring Boot 2.x **Spring Boot 3.x**로 마이그레이션을 했습니다. 
+> **스프링 부트와 AWS로 혼자 구현하는 웹 서비스**
+> 
+> 책의 예제를 기반으로 **Spring Boot 3.x & Java 21** 최신 환경으로 리팩토링하고, **AWS 클라우드 인프라**를 직접 구축하여 배포한 프로젝트입니다.
 
-## 주요 변경 사항 (Spring Boot 2.x -> 3.x 마이그레이션)
-원본 도서의 코드는 Spring Boot 2.x를 기준으로 작성되었으나, 현재 버전에 맞게 다음과 같은 마이그레이션 작업을 수행했습니다.
+<br>
 
+## 🌐 배포 사이트
+👉 **Live Demo**: *[배포 링크는 포트폴리오에 별도 첨부]*
+> *Google / Naver 소셜 로그인을 통해 글쓰기 기능을 체험하실 수 있습니다.*
 
-    
-1.  **Jakarta EE 적용**
-    - Java EE가 Eclipse Foundation으로 이관됨에 따라 패키지명이 변경되었습니다.
-    - `javax.persistence.*` -> `jakarta.persistence.*` (JPA 엔티티 등)
-    - `javax.servlet.*` -> `jakarta.servlet.*`
+<br>
 
-2.  **Spring Security 6.x 적용**
-    - 기존 `WebSecurityConfigurerAdapter` 상속 방식이 Deprecated 되었습니다.
-    - **`SecurityFilterChain`을 Bean으로 등록**하는 최신 방식으로 보안 설정을 전면 수정했습니다.
-    - `antMatchers()` -> `requestMatchers()`로 메서드명이 변경되었습니다.
+## 🛠 기술 스택 (Tech Stack)
 
-3.  **Gradle 설정 업데이트**
-    - Spring Boot 3.x 버전에 맞춰 플러그인 및 의존성 버전을 최신화했습니다.
+### Backend
+- **Java 21**
+- **Spring Boot 3.2**
+- **Spring Data JPA**
+- **Spring Security & OAuth 2.0**
+- **Gradle**
 
-## 시작하기 (Getting Started)
+### Infrastructure & Database
+- **AWS EC2** (Amazon Linux 2023)
+- **AWS RDS** (MySQL 8.0)
+- **H2 Database** (Local/Test)
 
-### 사전 요구 사항 (Prerequisites)
-- **Java 17** 이상
-- Gradle
+<br>
 
-### 설정 (Configuration)
-이 프로젝트는 인증을 위해 OAuth2를 사용합니다. 보안상의 이유로 민감한 키 값이 포함된 `application-oauth.properties` 파일은 저장소에 포함되어 있지 않습니다.
+## ✨ 주요 기능 (Key Features)
 
-로컬에서 프로젝트를 실행하려면 제공된 샘플 파일을 기반으로 해당 파일을 직접 생성해야 합니다.
+1.  **게시글 CRUD**
+    - 게시글 등록, 수정, 조회, 삭제 API 구현
+    - JPA Auditing을 이용한 생성/수정 시간 자동화 (`BaseTimeEntity`)
 
-1. 샘플 파일을 복사합니다:
-   ```bash
-   cp src/main/resources/application-oauth.properties.sample src/main/resources/application-oauth.properties
-   ```
+2.  **OAuth 2.0 소셜 로그인**
+    - **Google**, **Naver** 계정을 연동한 간편 로그인/회원가입
+    - `SessionUser`를 활용한 세션 기반 인증
 
-2. `src/main/resources/application-oauth.properties` 파일을 열고 아래 항목들을 실제 OAuth 자격 증명(Credential)으로 교체하세요:
-   - `YOUR_GOOGLE_CLIENT_ID`
-   - `YOUR_GOOGLE_CLIENT_SECRET`
-   - `YOUR_NAVER_CLIENT_ID`
-   - `YOUR_NAVER_CLIENT_SECRET`
+3.  **권한 관리 (Security)**
+    - 로그인한 사용자만 게시글 작성/수정 가능
+    - **서버 사이드 검증**: 타인의 게시글을 수정/삭제하지 못하도록 ID 기반의 권한 체크 로직 구현 (IDOR 방지)
 
-### 빌드 및 실행 (Build and Run)
-```bash
-./gradlew build
-java -jar build/libs/demo-0.0.1-SNAPSHOT.jar
-```
+<br>
+
+## ☁️ 인프라 아키텍처 (Infrastructure)
+
+- **EC2 (Web Server)**: Amazon Linux 2023 환경 구축, 타임존(Asia/Seoul) 설정
+- **RDS (Database)**: MySQL 8.0, UTF-8(utf8mb4) 인코딩 설정
+- **Security Group**: EC2와 RDS 간의 안전한 연결을 위한 인바운드 규칙 설계
+- **Deployment**: `nohup`을 활용한 백그라운드 무중단 실행 환경 구성
+
+<br>
+
+## 📝 트러블 슈팅 (Trouble Shooting)
+
+배포 과정에서 발생한 주요 이슈와 해결 과정을 기록했습니다.
+👉 **[상세 배포 일지 보러가기 (DEPLOY_LOG.md)](DEPLOY_LOG.md)**
+
+- **환경 불일치 해결**: 로컬(Mac/JDK21)과 서버(Linux/JDK17)의 버전 차이로 인한 실행 오류 해결 (Environment Parity)
+- **네트워크 보안**: AWS Security Group 설정을 통한 SSH/DB 접속 타임아웃 해결
+- **OAuth 리디렉션**: 배포 IP/도메인 변경에 따른 OAuth Provider(Google/Naver) 리디렉션 URI 불일치 문제 해결
